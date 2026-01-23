@@ -9,7 +9,7 @@ def handle_command(cmd: str):
     cmd = cmd.lower().strip()
     if not cmd:
         return
-    # explicit list query first to avoid matching the generic 'remind' keyword
+    #explicit list query first to avoid matching the generic 'remind' keyword
     if "list" in cmd and "remind" in cmd:
         for r in reminders.list_reminders():
             print(r)
