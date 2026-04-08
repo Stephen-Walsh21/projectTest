@@ -39,9 +39,11 @@ def handle_command(cmd: str): #takes the command as a string and processes (text
                 "Clear 'all' or 'one': ",
             ).lower()
             if choice == "all":
+                existing_events = schedule_mod.load_schedule("schedule.json")
                 removed = schedule_mod.clear_schedule("schedule.json")
                 if removed:
-                    speak("Cleared all schedule events.")
+                    names = ", ".join(e.get("title", "Untitled") for e in existing_events)
+                    speak(f"Cleared all schedule events: {names}")
                 else:
                     speak("No schedule events to clear.")
             elif choice == "one":
@@ -64,9 +66,11 @@ def handle_command(cmd: str): #takes the command as a string and processes (text
             "Clear 'all' or 'one': ",
         ).lower()
         if choice == "all":
+            existing_items = reminders.list_entries(kind=kind)
             removed = reminders.clear_entries(kind=kind)
             if removed:
-                speak(f"Cleared all {scope}.")
+                names = ", ".join(item.get("text", "Untitled") for item in existing_items)
+                speak(f"Cleared all {scope}: {names}")
             else:
                 speak(f"No {scope} to clear.")
         elif choice == "one":
