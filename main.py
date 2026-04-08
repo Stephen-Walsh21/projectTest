@@ -40,7 +40,10 @@ def handle_command(cmd: str): #takes the command as a string and processes (text
             ).lower()
             if choice == "all":
                 removed = schedule_mod.clear_schedule("schedule.json")
-                speak(f"Cleared {removed} schedule events.")
+                if removed:
+                    speak("Cleared all schedule events.")
+                else:
+                    speak("No schedule events to clear.")
             elif choice == "one":
                 title = _ask_with_voice_fallback(
                     "Say or type the schedule event title to clear.",
@@ -62,7 +65,10 @@ def handle_command(cmd: str): #takes the command as a string and processes (text
         ).lower()
         if choice == "all":
             removed = reminders.clear_entries(kind=kind)
-            speak(f"Cleared {removed} {scope}.")
+            if removed:
+                speak(f"Cleared all {scope}.")
+            else:
+                speak(f"No {scope} to clear.")
         elif choice == "one":
             label = _ask_with_voice_fallback(
                 f"Say or type the {kind} label to clear.",
@@ -82,7 +88,7 @@ def handle_command(cmd: str): #takes the command as a string and processes (text
         if not events:
             speak("No schedule events found.")
         for event in events:
-            out = f"{event.get('start', '?')} to {event.get('end', '?')}: {event.get('title', 'Untitled')}"
+            out = f"Event: {event.get('title', 'Untitled')} from {event.get('start', '?')} to {event.get('end', '?')}"
             print(out)
             speak(out)
     elif wants_list and has_alarm:
@@ -90,15 +96,17 @@ def handle_command(cmd: str): #takes the command as a string and processes (text
         if not alarms:
             speak("No alarms scheduled.")
         for r in alarms:
-            print(r)
-            speak(str(r))
+            out = f"Alarm: {r.get('text', 'Untitled')} at {r.get('time', '?')}"
+            print(out)
+            speak(out)
     elif wants_list and has_reminder:
         reminder_items = reminders.list_entries(kind="reminder")
         if not reminder_items:
             speak("No reminders scheduled.")
         for r in reminder_items:
-            print(r)
-            speak(str(r))
+            out = f"Reminder: {r.get('text', 'Untitled')} at {r.get('time', '?')}"
+            print(out)
+            speak(out)
 
     # Create new reminders, alarms, or events.
     elif wants_set and has_reminder:
