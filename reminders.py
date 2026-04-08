@@ -5,6 +5,7 @@ from datetime import datetime
 from tts import speak
 
 STORE = "reminders.json" #where all reminders are stored (in JSON format - human and machine readable)
+ACTIVE_TIMERS = []
 
 def _ensure_store():
     if not os.path.exists(STORE):
@@ -21,10 +22,34 @@ def _parse_time(timestr: str):
     # if all else fails, try ISO format which is more flexible and can handle timezone info
     return datetime.fromisoformat(timestr)
 
-def add_reminder(timestr: str, text: str):
+def _same_entry(a, b):
+    return (
+        a.get("time") == b.get("time")
+        and a.get("text") == b.get("text")
+        and a.get("kind", "reminder") == b.get("kind", "reminder")
+    )
+
+def _cancel_timers_for(predicate): #used for cancelling reminders
+    remaining = []
+    for item in ACTIVE_TIMERS:
+        if predicate(item["entry"]):
+            try:
+                item["timer"].cancel()
+            except Exception:
+                pass
+        else:
+            remaining.append(item)
+    ACTIVE_TIMERS.clear()
+    ACTIVE_TIMERS.extend(remaining)
+
+def add_reminder(timestr: str, text: str, kind: str = "reminder"):
     _ensure_store() #makes sure reminders file exists
     t = _parse_time(timestr) #converts input string into a datetime object
-    entry = {"time": t.isoformat(), "text": text} #creates a dictionary with the reminder time (in ISO format) and the reminder text
+    entry = {
+        "time": t.isoformat(),
+        "text": text,
+        "kind": kind,
+    } #creates a dictionary with the reminder time (in ISO format) and the reminder text
     with open(STORE, 'r+') as f:
         data = json.load(f) #loads the store list
         data.append(entry) #adds to store list
@@ -36,6 +61,59 @@ def list_reminders():
     _ensure_store()
     with open(STORE, 'r') as f: #opens file for reading
         return json.load(f) #reads and returns the list
+
+def list_entries(kind: str | None = None):
+    entries = list_reminders()
+    if kind is None:
+        return entries
+    return [e for e in entries if e.get("kind", "reminder") == kind]
+
+def clear_reminders():
+    return clear_entries(kind="reminder")
+
+def clear_entries(kind: str | None = None): #used to clear reminders
+    _ensure_store()
+    with open(STORE, 'r') as f:
+        data = json.load(f)
+
+    if kind is None:
+        removed = list(data)
+        kept = []
+    else:
+        removed = [e for e in data if e.get("kind", "reminder") == kind]
+        kept = [e for e in data if e.get("kind", "reminder") != kind]
+
+    _cancel_timers_for(lambda entry: any(_same_entry(entry, r) for r in removed))
+
+    with open(STORE, 'w') as f: #overwrites with only what we want to keep
+        json.dump(kept, f, indent=2)
+
+    return len(removed)
+
+def delete_by_label(label: str, kind: str):
+    _ensure_store()
+    with open(STORE, 'r') as f:
+        data = json.load(f)
+
+    needle = label.strip().lower()
+    idx = -1
+    for i, entry in enumerate(data):
+        if entry.get("kind", "reminder") != kind:
+            continue
+        if entry.get("text", "").strip().lower() == needle:
+            idx = i
+            break
+
+    if idx == -1:
+        return False
+
+    removed = data.pop(idx)
+    _cancel_timers_for(lambda entry: _same_entry(entry, removed))
+
+    with open(STORE, 'w') as f:
+        json.dump(data, f, indent=2)
+
+    return True
 
 def _trigger(entry): #reads the reminder out loud
     speak(f"Reminder: {entry['text']}")
@@ -50,6 +128,7 @@ def schedule_entry(entry):
     else: #start when time hits
         timer = threading.Timer(delta, _trigger, args=(entry,))
         timer.daemon = True
+        ACTIVE_TIMERS.append({"entry": entry, "timer": timer})
         timer.start()
 
 def schedule_existing_reminders():

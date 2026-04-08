@@ -21,3 +21,41 @@ def normalized_intervals(events):
             continue
     res.sort() #sorts the intervals by start time
     return res
+
+def add_schedule_event(path: str, start: str, end: str, title: str):
+    s = datetime.fromisoformat(start)
+    en = datetime.fromisoformat(end)
+    if en <= s:
+        raise ValueError("End time must be after start time")
+
+    events = load_schedule(path)
+    events.append({"start": s.isoformat(timespec="minutes"), "end": en.isoformat(timespec="minutes"), "title": title})
+
+    with open(path, 'w') as f:
+        json.dump(events, f, indent=2)
+
+    return events[-1]
+
+def clear_schedule(path: str):
+    events = load_schedule(path)
+    removed = len(events)
+    with open(path, 'w') as f:
+        json.dump([], f, indent=2)
+    return removed
+
+def delete_schedule_event_by_title(path: str, title: str):
+    events = load_schedule(path)
+    needle = title.strip().lower()
+    idx = -1
+    for i, event in enumerate(events):
+        if event.get("title", "").strip().lower() == needle:
+            idx = i
+            break
+
+    if idx == -1:
+        return False
+
+    events.pop(idx)
+    with open(path, 'w') as f:
+        json.dump(events, f, indent=2)
+    return True

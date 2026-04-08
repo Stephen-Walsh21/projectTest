@@ -38,11 +38,9 @@ def analyze_schedule(events, day_start="06:00", day_end="22:00"): #arbitrary day
             # This skips very short gaps that are too small for a workout
             continue
         if minutes < 30:
-            #This is enough time for a quick workout
             act = "Quick stretch / core (15 minutes)"
             duration = 15
         elif minutes < 45:
-            #More time means longer workout
             act = "HIIT or brisk walk (30 minutes)"#HIIT = High-Intensity Interval Training (workout that alternates between intense activity and periods of less-intense activity/complete rest)
             duration = 30
         else:
