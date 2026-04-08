@@ -5,8 +5,8 @@ import fitness
 import schedule as schedule_mod
 import time
 
-def handle_command(cmd: str):
-    cmd = cmd.lower().strip()
+def handle_command(cmd: str): #takes the command as a string and processes (text/voice) to determine what action to take
+    cmd = cmd.lower().strip() #cmd is a string that represents the user's command. The code converts it to lowercase and removes leading/trailing whitespace to standardize it for easier processing
     if not cmd:
         return
     #explicit list query first to avoid matching the generic 'remind' keyword
@@ -30,7 +30,7 @@ def handle_command(cmd: str):
         speak("Loading schedule.json and analyzing free time.")
         sched = schedule_mod.load_schedule("schedule.json")
         plan = fitness.analyze_schedule(sched)
-        for item in plan:
+        for item in plan: #item is the individual workout suggestion
             out = f"{item['time_range']}: {item['activity']}"
             print(out)
             speak(out)
@@ -41,17 +41,17 @@ def handle_command(cmd: str):
         speak("Command not recognized. Try: set reminder, set alarm, analyze schedule, list reminders, or exit.")
 
 def main():
-    reminders.schedule_existing_reminders()
+    reminders.schedule_existing_reminders() #schedules any reminders that were added in previous runs of the program (stored in reminders.json)
     speak("Assistant ready. Say a command or type it.")
     while True:
         try:
             cmd = listen_command()
         except Exception:
             cmd = ""
-        if not cmd:
+        if not cmd: #waits for a voice command, if it doesnt hear one then it waits for a text command instead
             cmd = input(">> ")
         handle_command(cmd)
-        time.sleep(0.2)
+        time.sleep(0.2) #pauses the loop for a short time before the next cycle so that the CPU isnt overworked
 
-if __name__ == '__main__':
-    main()
+if __name__ == '__main__': 
+    main() #only runs the main function if this script is executed directly (not imported as a module)

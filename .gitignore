@@ -8,3 +8,4 @@ run_main*.log
 *.egg-info/
 .Python
 venv/
+#tells git what files to ignore
